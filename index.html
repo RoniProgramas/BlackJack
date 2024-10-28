@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack</title>
+    <script type="text/javascript" src="https://cdn.rawgit.com/brython-dev/brython/master/brython.js"></script>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body onload="brython()">
+    <div class="container">
+        <h1>Blackjack</h1>
+        <div id="game">
+            <div id="player-hand">
+                <h2>Mão do Jogador</h2>
+                <div id="player-cards"></div>
+                <p id="player-score"></p>
+            </div>
+            <div id="dealer-hand">
+                <h2>Mão do Dealer</h2>
+                <div id="dealer-cards"></div>
+                <p id="dealer-score"></p>
+            </div>
+        </div>
+        <div class="buttons">
+            <button id="start-button">Iniciar Jogo</button>
+            <button id="hit-button" disabled>HIT</button>
+            <button id="stand-button" disabled>STAND</button>
+        </div>
+        <div id="message"></div>
+    </div>
+    <script type="text/python">
+        from browser import document, window
+        import random
+
+        def criar_mazo():
+            naipes = ['♥', '♦', '♣', '♠']
+            valores = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+            return [(valor, naipe) for valor in valores for naipe in naipes]
+
+        def valor_carta(carta):
+            if carta[0] in ['J', 'Q', 'K']:
+                return 10
+            elif carta[0] == 'A':
+                return 11
+            else:
+                return int(carta[0])
+
+        def calcular_pontuacao(mao):
+            total = sum(valor_carta(carta) for carta in mao)
+            aces = sum(1 for carta in mao if carta[0] == 'A')
+            while total > 21 and aces:
+                total -= 10
+                aces -= 1
+            return total
+
+        def atualizar_jogo():
+            document["player-cards"].text = str(jogador)
+            document["player-score"].text = str(calcular_pontuacao(jogador))
+            document["dealer-cards"].text = str(dealer) if dealer_visible else "[?, ?]"
+            document["dealer-score"].text = str(calcular_pontuacao(dealer)) if dealer_visible else "?"
+
+        def iniciar_jogo(event):
+            global mazo, jogador, dealer, dealer_visible
+            mazo = criar_mazo()
+            random.shuffle(mazo)
+            jogador = [mazo.pop(), mazo.pop()]
+            dealer = [mazo.pop(), mazo.pop()]
+            dealer_visible = False
+            atualizar_jogo()
+            document["hit-button"].disabled = False
+            document["stand-button"].disabled = False
+            document["message"].text = ""
+
+        def hit(event):
+            jogador.append(mazo.pop())
+            pontuacao_jogador = calcular_pontuacao(jogador)
+            atualizar_jogo()
+            if pontuacao_jogador > 21:
+                document["message"].text = "Você estourou! Dealer venceu."
+                document["hit-button"].disabled = True
+                document["stand-button"].disabled = True
+
+        def stand(event):
+            global dealer_visible
+            dealer_visible = True
+            while calcular_pontuacao(dealer) < 17:
+                dealer.append(mazo.pop())
+            pontuacao_jogador = calcular_pontuacao(jogador)
+            pontuacao_dealer = calcular_pontuacao(dealer)
+            atualizar_jogo()
+            if pontuacao_dealer > 21:
+                document["message"].text = "Dealer estourou! Você venceu."
+            elif pontuacao_jogador > pontuacao_dealer:
+                document["message"].text = "Você venceu!"
+            elif pontuacao_jogador < pontuacao_dealer:
+                document["message"].text = "Dealer venceu!"
+            else:
+                document["message"].text = "Empate!"
+            document["hit-button"].disabled = True
+            document["stand-button"].disabled = True
+
+        document["start-button"].bind("click", iniciar_jogo)
+        document["hit-button"].bind("click", hit)
+        document["stand-button"].bind("click", stand)
+    </script>
+</body>
+</html>
