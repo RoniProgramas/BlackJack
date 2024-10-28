@@ -30,7 +30,7 @@
         <div id="message"></div>
     </div>
     <script type="text/python">
-        from browser import document, window
+        from browser import document
         import random
 
         def criar_mazo():
@@ -55,10 +55,14 @@
             return total
 
         def atualizar_jogo():
-            document["player-cards"].text = str(jogador)
+            document["player-cards"].text = ', '.join([f'{carta[0]}{carta[1]}' for carta in jogador])
             document["player-score"].text = str(calcular_pontuacao(jogador))
-            document["dealer-cards"].text = str(dealer) if dealer_visible else "[?, ?]"
-            document["dealer-score"].text = str(calcular_pontuacao(dealer)) if dealer_visible else "?"
+            if dealer_visible:
+                document["dealer-cards"].text = ', '.join([f'{carta[0]}{carta[1]}' for carta in dealer])
+                document["dealer-score"].text = str(calcular_pontuacao(dealer))
+            else:
+                document["dealer-cards"].text = f'{dealer[0][0]}{dealer[0][1]}, ?'
+                document["dealer-score"].text = "?"
 
         def iniciar_jogo(event):
             global mazo, jogador, dealer, dealer_visible
